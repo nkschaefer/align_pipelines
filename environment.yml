@@ -1,0 +1,15 @@
+name: align_pipelines
+channels:
+  - conda-forge
+  - anaconda
+  - bioconda
+dependencies:
+  - htslib>=1.10.2
+  - libzlib
+  - samtools
+  - tabix
+  - bedtools
+  - nextflow
+  - sinto
+  - minimap2
+  - star=2.7.11b
