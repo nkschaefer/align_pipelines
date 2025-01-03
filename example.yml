@@ -1,0 +1,26 @@
+# A file listing each library you want to process, one per line
+libs = '/path/to/libs.txt'
+# Where to store results
+output_directory = '/path/to/dir'
+
+# ==== Optional settings =====
+# Default memory for big processes in GB
+memgb = '80' 
+# Number of threads to use
+threads = 1
+
+# ==== If processing RNA-seq data =====
+# Directory storing RNA-seq data
+rna_dir = '/path/to/dir'
+# Path to built STAR v2.7.10b reference
+rna_ref = '/path/to/dir'
+# Path to RNA-seq barcode whitelist
+rna_whitelist = '/path/to/file'
+
+# ===== If processing ATAC-seq data =====
+# Directory storing ATAC-seq data
+atac_dir = '/path/to/dir'
+# Path to built minimap2 reference
+atac_ref = '/path/to-file'
+# Path to ATAC-seq barcode whitelist
+atac_whitelist = '/path/to/file'

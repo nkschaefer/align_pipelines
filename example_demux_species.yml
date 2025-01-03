@@ -1,0 +1,22 @@
+# Path to demux_species output directory
+demux_species = '/path/to/dir'
+# Where to store results
+output_directory = '/path/to/dir'
+
+# ==== Optional settings =====
+# Default memory for big processes in GB
+memgb = '80' 
+# Number of threads to use
+threads = 1
+
+# ==== If processing RNA-seq data =====
+# Path to tsv file mapping species (col 1) to built STAR v2.7.10b reference (col 2)
+rna_ref_species = '/path/to/file'
+# Path to RNA-seq barcode whitelist
+rna_whitelist = '/path/to/file'
+
+# ===== If processing ATAC-seq data =====
+# Path to tsv file mapping species (col 1) to built minimap2 reference (col 2)
+atac_ref_species = '/path/to/file'
+# Path to ATAC-seq barcode whitelist
+atac_whitelist = '/path/to/file'

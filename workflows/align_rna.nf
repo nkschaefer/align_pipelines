@@ -44,6 +44,13 @@ process map_rna{
         mkdir ${reftrunc}
         mv ${ref} ${reftrunc}
     fi
+    if gzip -t ${whitelist}; then
+        # Whitelist is gzipped
+        zcat ${whitelist} > wl_unzip.txt
+    else 
+        # Whitelist not gzipped
+        cp ${whitelist} wl_unzip.txt
+    fi
 
 STAR --genomeDir ${reftrunc} \
  --runThreadN ${params.threads} \
@@ -59,7 +66,7 @@ STAR --genomeDir ${reftrunc} \
  --soloCBlen 16 \
  --soloUMIstart 17 \
  --soloUMIlen 12 \
- --soloCBwhitelist ${whitelist} \
+ --soloCBwhitelist wl_unzip.txt \
  --outFilterScoreMin 30 \
  --soloCBmatchWLtype 1MM_multi_Nbase_pseudocounts \
  --soloUMIfiltering MultiGeneUMI_CR \
