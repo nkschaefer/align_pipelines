@@ -2,6 +2,9 @@
 nextflow.enable.dsl=2
 
 include { align_rna } from './workflows/align_rna.nf'
+include { align_rna_demux_species } from './workflows/align_rna.nf'
+include { align_atac } from './workflows/align_atac.nf'
+include { align_atac_demux_species} from './workflows/align_atac.nf'
 
 if (!params.output_directory){
     error("Output directory is required.")
@@ -11,34 +14,25 @@ if (!params.libs){
 }
 
 workflow{
-    
-    // index input FASTA 
-    fa_indexed = faidx(Channel.fromPath(params.genome))
-    
-    // Toss out short sequences and ones marked excludable (i.e. 
-    // random, chrUn, alt scaffolds)
-    if (params.annotation){
-        
-        fa_ann_filt = fa_indexed.combine(Channel.fromPath(params.annotation)) \
-            | rm_short_scaffolds_annotation
-        rm_numts_annotation(fa_ann_filt)
-        fa_filt = fa_ann_filt.map{ x ->
-            x[0]
+    if (params.demux_species){
+        if (params.rna_ref_species){
+            align_rna_demux_species()
+        } else if (params.rna_ref){
+            error("If using demux_species output, you must provide rna_ref_species instead of rna_ref")
         }
-        fa_ann_filt.map{ x -> 
-            x[1]
-        } | compress_annotation
+        if (params.atac_ref_species){
+            align_atac_demux_species()
+        } else if (params.atac_ref){
+            error("If using demux_species output, you must provide atac_ref_species instead of atac_ref")
+        }
     }
     else{
-        fa_filt = rm_short_scaffolds_fa(fa_indexed)
+        def libs = Channel.fromPath(params.libs).splitText().map{ id -> id.trim() }
+        if (params.rna_ref){
+            align_rna(libs)
+        }
+        if (params.atac_ref){
+            align_atac(libs)
+        }
     }
-    
-    fa_filt | compress_fa
-
-    numtmasked_fa = mask_numts_fasta(fa_filt)
-    bl_bed = genmap_blacklist_fasta(fa_filt)
-    numtmasked_fa.combine(bl_bed) | mask_both_beds
-    
 }
-
-
