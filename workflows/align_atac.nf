@@ -10,6 +10,9 @@ if (!params.demux_species){
             atac_map[atac] = lib
         }
     } else{
+        if (!params.libs){
+            error("libs file required.")
+        }
         new File(params.libs).eachLine { line ->
             def linetrim = line.trim()
             atac_map[linetrim] = linetrim
@@ -34,6 +37,32 @@ process preproc_atac_files{
     file(r1),
     file(r2),
     file(r3),
+    file(idx),
+    file(wl)
+    
+    output:
+    tuple val(lib),
+    val(basename),
+    file("preproc/*_R1*.fastq.gz"),
+    file("preproc/*_R2*.fastq.gz"),
+    file(idx)
+
+    script:
+    """
+    mkdir preproc
+    ${baseDir}/atac_fq_preprocess -1 ${r1} -2 ${r2} -3 ${r3} -o preproc -w ${wl}
+    """
+}
+process preproc_atac_files_multiome{
+    time '24h'
+    
+    input:
+    tuple val(lib),
+    val(basename),
+    file(r1),
+    file(r2),
+    file(r3),
+    file(idx),
     file(wl_rna),
     file(wl_atac)
     
@@ -41,7 +70,8 @@ process preproc_atac_files{
     tuple val(lib),
     val(basename),
     file("preproc/*_R1*.fastq.gz"),
-    file("preproc/*_R2*.fastq.gz")
+    file("preproc/*_R2*.fastq.gz"),
+    file(idx)
 
     script:
     """
@@ -193,9 +223,6 @@ workflow align_atac_demux_species{
         error("demux_species output dir is required")
     }
     
-    def wl_rna = Channel.fromPath(params.rna_whitelist)
-    def wl_atac = Channel.fromPath(params.atac_whitelist)
-    
     def atac_triples = Channel.fromPath("${params.demux_species}/*/*/ATAC*_R3*.fastq.gz").map{ fn -> 
         def r3 = fn.toString().trim()
         def libn = r3.split('/')[-3]
@@ -223,7 +250,21 @@ workflow align_atac_demux_species{
         return [ libn + "/" + species, fnbase, file(r1), file(r2), file(r3), file(atac_ref_map[species]) ]
     }
     
-    atac_preproc1 = preproc_atac_files(atac_triples)
+    if (params.multiome){
+        if (!params.rna_whitelist || !params.atac_whitelist){
+            error("Both rna_whitelist and atac_whitelist are required if multiome data")
+        }
+        def wl_rna = Channel.fromPath(params.rna_whitelist)
+        def wl_atac = Channel.fromPath(params.atac_whitelist)
+        atac_preproc1 = preproc_atac_files_multiome(atac_triples.combine(wl_rna).combine(wl_atac))
+    }
+    else{
+        if (!params.atac_whitelist){
+            error("ATAC whitelist required")
+        }
+        def wl = Channel.fromPath(params.atac_whitelist)
+        atac_preproc1 = preproc_atac_files(atac_triples.combine(wl))
+    } 
 
     def atac_pairs = Channel.fromFilePairs("${params.demux_species}/*/*/ATAC*_S*L*_R{1,2}*.fastq.gz").map{ id, reads ->
         def libn = reads[0].toString().split('/')[-3]
@@ -254,9 +295,6 @@ workflow align_atac{
         error("ATAC reads directory is required")
     }
     
-    def wl_rna = Channel.fromPath(params.rna_whitelist)
-    def wl_atac = Channel.fromPath(params.atac_whitelist)
-    
     def idx_atac = Channel.fromPath(params.atac_ref)
     
     // Get non-preprocessed files
@@ -280,9 +318,23 @@ workflow align_atac{
         def r2 = dirn + match[2] + "_R2" + end + '.' + match[4] + gz
         def fnbase = match[2]
         return [ atac_map[libname_atac], fnbase, file(r1), file(r2), file(r3)]
-    }).map{ lib, tup -> tup }.combine(wl_rna).combine(wl_atac)
-     
-    atac_preproc1 = preproc_atac_files(atac_triples).combine(idx_atac)
+    }).map{ lib, tup -> tup }
+    
+    if (params.multiome){
+        if (!params.atac_whitelist || !params.rna_whitelist){
+            error("rna_whitelist and atac_whitelist are required for multiome data.")
+        }
+        def wl_rna = Channel.fromPath(params.rna_whitelist)
+        def wl_atac = Channel.fromPath(params.atac_whitelist)    
+        atac_preproc1 = preproc_atac_files_multiome(atac_triples.combine(idx_atac).combine(wl_rna).combine(wl_atac))
+    }
+    else{
+        if (!params.atac_whitelist){
+            error("atac_whitelist is required")
+        }
+        def wl = Channel.fromPath(params.atac_whitelist)
+        atac_preproc1 = preproc_atac_files(atac_triples.combine(idx_atac).combine(wl))
+    } 
     
     // Get pre-processed files
     def atac_pairs = libs.cross(

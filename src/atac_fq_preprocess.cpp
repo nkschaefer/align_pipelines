@@ -42,6 +42,8 @@ void help(int code){
     fprintf(stderr, "    --whitelist -w cell barcode whitelist. In the case of 10X Genomics multiome\n");
     fprintf(stderr, "      data, you must provide the multiome RNA-seq whitelist with this argument\n");
     fprintf(stderr, "      and the multiome ATAC-seq whitelist with the --whitelist2/-W argument.\n");
+    fprintf(stderr, "      If this is regular (non-multiome) scATAC-seq data, just provide the ATAC\n");
+    fprintf(stderr, "      cell barcode whitelist with this argument.\n");
     fprintf(stderr, "    --whitelist2 -W cell barcode whitelist for ATAC, if 10X Genomics multiome\n");
     fprintf(stderr, "      data. Multiome kits use separate barcodes for ATAC and RNA-seq, but each\n");
     fprintf(stderr, "      ATAC barcode has a corresponding RNA-seq barcode that is reported in the\n");
