@@ -1,0 +1,15 @@
+# ==== Optional settings =====
+# Default memory for big processes in GB
+memgb: '80' 
+
+# ==== Required for RNA-seq and ATAC-seq reference =====
+# Where to store results
+output_directory: '/path/to/dir'
+# Name to use for output files
+genome_base: "name"
+# Genome in FASTA format
+fasta: "genome.fa"
+
+# ===== Required for RNA-seq reference =====
+# Gene annotation GTF
+gtf: "genes.gtf"
