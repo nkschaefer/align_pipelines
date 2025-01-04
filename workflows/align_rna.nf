@@ -44,11 +44,9 @@ process map_rna{
         mkdir ${reftrunc}
         mv ${ref} ${reftrunc}
     fi
-    if gzip -t ${whitelist}; then
-        # Whitelist is gzipped
+    if [ \$( file --mime-type -b ${whitelist} | grep "gzip" | wc -l ) -gt 0 ]; then 
         zcat ${whitelist} > wl_unzip.txt
     else 
-        # Whitelist not gzipped
         cp ${whitelist} wl_unzip.txt
     fi
 
