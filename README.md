@@ -53,7 +53,13 @@ rm -r work
 in whatever directory you ran the pipeline.
 
 #### Building references
-Before you align anything, you will need to build reference data. To do this, use the pipeline `make_ref.nf` and copy the `example_make_ref.yml` file. You must provide a genome in FASTA format; if you also provide an annotation in GTF format, it will build a `[STAR](https://github.com/alexdobin/STAR)` index for mapping RNA-seq data. Whether or not you provide an annotation, it will also build a `[minimap2](https://github.com/lh3/minimap2)` index for aligning ATAC-seq data. For this pipeline, the `genome_base` parameter you provide will serve as the name of the `STAR` genome directory, and the `minimap2` index will be called `[genome_base].mm2`.
+Before you align anything, you will need to build reference data. 
+
+To do this, use the pipeline `make_ref.nf` and copy the `example_make_ref.yml` file. 
+
+You must provide a genome in FASTA format; if you also provide an annotation in GTF format, it will build a [`STAR`](https://github.com/alexdobin/STAR) index for mapping RNA-seq data. Whether or not you provide an annotation, it will also build a [`minimap2`](https://github.com/lh3/minimap2) index for aligning ATAC-seq data. 
+
+For this pipeline, the `genome_base` parameter you provide will serve as the name of the `STAR` genome directory, and the `minimap2` index will be called `[genome_base].mm2`.
 
 `STAR` indexes are not compatible across versions - this pipeline is set up to install and use `STAR` v 2.7.10b. 
 
