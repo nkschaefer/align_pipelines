@@ -59,9 +59,14 @@ To do this, use the pipeline `make_ref.nf` and copy the `example_make_ref.yml` f
 
 You must provide a genome in FASTA format; if you also provide an annotation in GTF format, it will build a [`STAR`](https://github.com/alexdobin/STAR) index for mapping RNA-seq data. Whether or not you provide an annotation, it will also build a [`minimap2`](https://github.com/lh3/minimap2) index for aligning ATAC-seq data. 
 
+`STAR` will usually complain if input files are gzipped, but this pipeline can handle gzipped or uncompressed FASTA and GTF files.
+
 For this pipeline, the `genome_base` parameter you provide will serve as the name of the `STAR` genome directory, and the `minimap2` index will be called `[genome_base].mm2`.
 
 `STAR` indexes are not compatible across versions - this pipeline is set up to install and use `STAR` v 2.7.10b. 
 
 #### demux_species output
 This pipeline can also run on the output from [`CellBouncer`](https://github.com/nkschaefer/cellbouncer)'s `demux_species` program. For this, copy the `example_demux_species.yml` file, edit parameters as you need, and run `align_pipelines.yml` using this file. Output will be structured similarly to that from `demux_species`, and all species demultiplexing data will be copied into output directories.
+
+#### Barcode whitelists
+To process ATAC-seq or RNA-seq data, this pipeline requires [allowed barcode lists](https://kb.10xgenomics.com/hc/en-us/articles/115004506263-What-is-a-barcode-whitelist) to determine which reads are associated with cell barcodes. If you are aligning RNA-seq only, there will be one list (`rna_whitelist` parameter). If you are processing scATAC-seq data only, there will also be one list (`atac_whitelist` parameter). If you are processing multiome data (where RNA-seq and ATAC-seq are collected from the same cells and have corresponding barcodes), there are two whitelists (`rna_whitelist` and `atac_whitelist`). These files are set up so that the barcode on line N of one file corresponds to the barcode on the same line of the other file. ATAC-seq reads contain the barcodes in `atac_whitelist`, but these are then converted into the corresponding barcodes from `rna_whitelist` to be reported in output data.
