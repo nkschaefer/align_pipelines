@@ -9,9 +9,6 @@ include { align_atac_demux_species} from './workflows/align_atac.nf'
 if (!params.output_directory){
     error("Output directory is required.")
 }
-if (!params.libs){
-    error("Libs file is required.")
-}
 
 workflow{
     if (params.demux_species){
@@ -27,6 +24,9 @@ workflow{
         }
     }
     else{
+        if (!params.libs){
+            error("Libs file is required.")
+        }
         def libs = Channel.fromPath(params.libs).splitText().map{ id -> id.trim() }
         if (params.rna_ref){
             align_rna(libs)

@@ -3,15 +3,17 @@ import java.util.zip.GZIPInputStream
 import java.nio.file.Files
 
 def atac_map = [:]
-if (params.atac_map){
-    new File(params.atac_map).eachLine { line ->
-        def (atac, lib) = line.split('\t')
-        atac_map[atac] = lib
-    }
-} else{
-    new File(params.libs).eachLine { line ->
-        def linetrim = line.trim()
-        atac_map[linetrim] = linetrim
+if (!params.demux_species){
+    if (params.atac_map){
+        new File(params.atac_map).eachLine { line ->
+            def (atac, lib) = line.split('\t')
+            atac_map[atac] = lib
+        }
+    } else{
+        new File(params.libs).eachLine { line ->
+            def linetrim = line.trim()
+            atac_map[linetrim] = linetrim
+        }
     }
 }
 
