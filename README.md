@@ -58,4 +58,4 @@ Before you align anything, you will need to build reference data. To do this, us
 `STAR` indexes are not compatible across versions - this pipeline is set up to install and use `STAR` v 2.7.10b. 
 
 #### demux_species output
-This pipeline can also run on the output from `[CellBouncer](https://github.com/nkschaefer/cellbouncer)`'s `demux_species` program. For this, copy the `example_demux_species.yml` file, edit parameters as you need, and run `align_pipelines.yml` using this file. Output will be structured similarly to that from `demux_species`, and all species demultiplexing data will be copied into output directories.
+This pipeline can also run on the output from [`CellBouncer`](https://github.com/nkschaefer/cellbouncer)'s `demux_species` program. For this, copy the `example_demux_species.yml` file, edit parameters as you need, and run `align_pipelines.yml` using this file. Output will be structured similarly to that from `demux_species`, and all species demultiplexing data will be copied into output directories.
