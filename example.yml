@@ -24,6 +24,14 @@ atac_dir: '/path/to/dir'
 atac_ref: '/path/to-file'
 # Path to ATAC-seq barcode whitelist
 atac_whitelist: '/path/to/file'
+# Are the library names in RNA-seq reads different
+# from those in ATAC-seq reads? If so, you can provide
+# a 2-column tab separated text file here, mapping
+# ATAC-seq read file library names (1st col) to 
+# corresponding RNA-seq read file library names (2nd col).
+# This will ensure all the data from the same library goes
+# to the same place.
+atac_map: '/path/to/file'
 # Is this multiome data? If so, there are two 
 # barcode whitelists, and cell barcodes are the
 # RNA-seq barcode corresponding to the matching
