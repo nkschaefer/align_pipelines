@@ -10,8 +10,11 @@ if (params.rna_ref_species){
 
 process map_rna{
     cpus params.threads
-    time '36h'
+    time { 24.hour * task.attempt }
     memory params.memgb + ' GB'
+    
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+    maxRetries 3
     
     input: 
     tuple val(lib),

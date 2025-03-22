@@ -51,9 +51,11 @@ process preproc_atac_files{
 }
 
 process align_atac_files{
-    time '24h'
+    time { 24.hour * task.attempt }
     cpus params.threads
     memory params.memgb + ' GB'
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+    maxRetries 3
     
     input:
     tuple val(lib),
@@ -75,8 +77,11 @@ process align_atac_files{
 }
 
 process cat_atac_bams{
-    time '12h'
+    time { 12.hour * task.attempt }
     cpus params.threads
+    
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+    maxRetries 3
     
     input:
     tuple val(lib),
@@ -138,8 +143,11 @@ process atac_namesort{
 }
 
 process atac_fragments{
-    time '12h'
+    time { 12.hour * task.attempt }
     cpus params.threads
+    
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+    maxRetries 3
     
     input:
     tuple val(lib),
