@@ -52,8 +52,8 @@ rm -r work
 ```
 in whatever directory you ran the pipeline.
 
-#### Building references
-Before you align anything, you will need to build reference data. 
+#### Building references -- RNA-seq/ATAC-seq only
+Before you align RNA-seq/ATAC-seq, you will need to build reference data. 
 
 To do this, use the pipeline `make_ref.nf` and copy the `example_make_ref.yml` file. 
 

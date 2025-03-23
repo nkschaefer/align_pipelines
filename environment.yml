@@ -13,3 +13,8 @@ dependencies:
   - sinto
   - minimap2
   - star=2.7.11b
+  - freebayes
+  - python
+  - tabix
+  - r-ggplot2
+  - r-ggtehemes

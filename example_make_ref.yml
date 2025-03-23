@@ -2,7 +2,7 @@
 # Default memory for big processes in GB
 memgb: '80' 
 
-# ==== Required for RNA-seq and ATAC-seq reference =====
+# ==== Required for DNA, RNA-seq, and ATAC-seq reference =====
 # Where to store results
 output_directory: '/path/to/dir'
 # Name to use for output files

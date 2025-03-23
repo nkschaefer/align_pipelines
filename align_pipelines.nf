@@ -4,7 +4,8 @@ nextflow.enable.dsl=2
 include { align_rna } from './workflows/align_rna.nf'
 include { align_rna_demux_species } from './workflows/align_rna.nf'
 include { align_atac } from './workflows/align_atac.nf'
-include { align_atac_demux_species} from './workflows/align_atac.nf'
+include { align_atac_demux_species } from './workflows/align_atac.nf'
+include { call_variants } from './workflows/align_dna.nf'
 
 if (!params.output_directory){
     error("Output directory is required.")
@@ -24,8 +25,8 @@ else{
     if (!params.libs){
         error("libs file is required.")
     }
-    if (!params.rna_ref && !params.atac_ref){
-        error("You must provide either rna_ref, atac_ref, or both.")
+    if (!params.rna_ref && !params.atac_ref && !params.dna_ref){
+        error("You must provide either rna_ref, atac_ref, or both, OR dna_ref if mapping/calling variants on genomic DNA.")
     }
 }
 
@@ -67,6 +68,9 @@ workflow{
         }
         if (params.atac_ref){
             align_atac(libs)
+        }
+        if (params.dna_ref){
+            call_variants(libs)
         }
     }
 }
