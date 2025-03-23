@@ -4,8 +4,8 @@ Nextflow pipelines for single cell sequencing data alignment
 This repository is intended to make it easy to align different types of data (e.g. single-cell RNA-seq, single-cell ATAC-seq, and bulk genomic DNA) to reference genomes, without the use of a proprietary pipeline like CellRanger. 
 
 * These pipelines skip some analysis steps (like pseudo-bulk peak calling on aligned scATAC-seq data, and clustering of scRNA-seq data) that many users will want to do on their own anyway.
-* We have found the included STARsolo parameters (if mapping scRNA-seq) to recover more reads than CellRanger defaults: it uses the EM-based gene counting strategy instead of discarding multi-mapping reads.
-* We use a custom (fast) C++ program to match ATAC-seq cell barcodes (allowing up to one mismatch per barcode) to a whitelist and remove them from reads, then use [minimap2](https://github.com/lh3/minimap2) to align to a reference. This is pretty fast.
+* We have found the included [STARsolo](https://github.com/alexdobin/STAR) parameters (if mapping scRNA-seq) to recover more reads than CellRanger defaults: it uses the EM-based gene counting strategy instead of discarding multi-mapping reads.
+* We use our own C++ program to match ATAC-seq cell barcodes (allowing up to one mismatch per barcode) to a whitelist and remove them from reads, then use [minimap2](https://github.com/lh3/minimap2) to align to a reference. This is pretty fast.
 * If aligning genomic DNA, we again use minimap2 for alignment, followed by [SAMtools](https://www.htslib.org/) (with mate pair information) for duplicate marking, and [FreeBayes](https://github.com/freebayes/freebayes) (parallelized by chromosome, in up to 30 pieces) for variant calling.
     * The genomic DNA variant calling pipeline also includes a filtering step by which genotypes are set to missing for which any individual falls outside its typical range of coverage (to avoid including unconfident variants in repetitive regions).
     * The genomic DNA variant calling pipeline also includes a script to plot coverage, heterozygosity, and missingness per sample, so you can quickly QC some stuff.
@@ -86,7 +86,7 @@ To process ATAC-seq or RNA-seq data, this pipeline requires [allowed barcode lis
 ### What if you have more than one directory containing reads of a specific type?
 The pipelines expect reads of any given type (e.g. RNA-seq, ATAC-seq, or genomic DNA) to be located in one directory. This isn't always the case. If your reads are in multiple directories, that's okay, as long as the reads don't have identical names. If they do (e.g. if you got more data back from the same exact sequencing run a second time), you'll need to concatenate the files.
 
-Otherwise, you can do this (assuming you have two directories, `/path/to/dir1` and `/path/to/dir2` containing the same type of data:
+Otherwise, you can do this (assuming you have two directories, `/path/to/dir1` and `/path/to/dir2` containing the same type of data):
 
 ```
 # Create a new directory
