@@ -1,6 +1,16 @@
 # align_pipelines
 Nextflow pipelines for single cell sequencing data alignment
 
+This repository is intended to make it easy to align different types of data (e.g. single-cell RNA-seq, single-cell ATAC-seq, and bulk genomic DNA) to reference genomes, without the use of a proprietary pipeline like CellRanger. 
+
+* These pipelines skip some analysis steps (like pseudo-bulk peak calling on aligned scATAC-seq data, and clustering of scRNA-seq data) that many users will want to do on their own anyway.
+* We have found the included STARsolo parameters (if mapping scRNA-seq) to recover more reads than CellRanger defaults: it uses the EM-based gene counting strategy instead of discarding multi-mapping reads.
+* We use a custom (fast) C++ program to match ATAC-seq cell barcodes (allowing up to one mismatch per barcode) to a whitelist and remove them from reads, then use [minimap2](https://github.com/lh3/minimap2) to align to a reference. This is pretty fast.
+* If aligning genomic DNA, we again use minimap2 for alignment, followed by [SAMtools](https://www.htslib.org/) (with mate pair information) for duplicate marking, and [FreeBayes](https://github.com/freebayes/freebayes) (parallelized by chromosome, in up to 30 pieces) for variant calling.
+    * The genomic DNA variant calling pipeline also includes a filtering step by which genotypes are set to missing for which any individual falls outside its typical range of coverage (to avoid including unconfident variants in repetitive regions).
+    * The genomic DNA variant calling pipeline also includes a script to plot coverage, heterozygosity, and missingness per sample, so you can quickly QC some stuff.
+* This is open source, so you can see what is going on.
+
 ## Installation
 
 ### Prerequisites
@@ -52,7 +62,8 @@ rm -r work
 ```
 in whatever directory you ran the pipeline.
 
-#### Building references -- RNA-seq/ATAC-seq only
+## Specific tasks
+### Building references -- RNA-seq/ATAC-seq only
 Before you align RNA-seq/ATAC-seq, you will need to build reference data. 
 
 To do this, use the pipeline `make_ref.nf` and copy the `example_make_ref.yml` file. 
@@ -65,10 +76,11 @@ For this pipeline, the `genome_base` parameter you provide will serve as the nam
 
 `STAR` indexes are not compatible across versions - this pipeline is set up to install and use `STAR` v 2.7.10b. 
 
-#### demux_species output
+### Running on CellBouncer demux_species output
 This pipeline can also run on the output from [`CellBouncer`](https://github.com/nkschaefer/cellbouncer)'s `demux_species` program. For this, copy the `example_demux_species.yml` file, edit parameters as you need, and run `align_pipelines.yml` using this file. Output will be structured similarly to that from `demux_species`, and all species demultiplexing data will be copied into output directories.
 
-#### Barcode whitelists
+## FAQ/Issues
+### What is the deal with barcode whitelists?
 To process ATAC-seq or RNA-seq data, this pipeline requires [allowed barcode lists](https://kb.10xgenomics.com/hc/en-us/articles/115004506263-What-is-a-barcode-whitelist) to determine which reads are associated with cell barcodes. If you are aligning RNA-seq only, there will be one list (`rna_whitelist` parameter). If you are processing scATAC-seq data only, there will also be one list (`atac_whitelist` parameter). If you are processing multiome data (where RNA-seq and ATAC-seq are collected from the same cells and have corresponding barcodes), there are two whitelists (`rna_whitelist` and `atac_whitelist`). These files are set up so that the barcode on line N of one file corresponds to the barcode on the same line of the other file. ATAC-seq reads contain the barcodes in `atac_whitelist`, but these are then converted into the corresponding barcodes from `rna_whitelist` to be reported in output data.
 
 ### What if you have more than one directory containing reads of a specific type?
