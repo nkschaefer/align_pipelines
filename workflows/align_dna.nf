@@ -199,8 +199,10 @@ workflow call_variants{
     
     def fa_genome = Channel.fromPath(params.dna_ref) | mm2_idx
     
+    libs.collect().map{ it as Set }.set{ lib_set }
+    
     // Get FASTQ file names
-    def dna_pairs = libs.cross(Channel.fromPath("${params.dna_dir}/*_R1*.fastq.gz").map{ fn -> 
+    def dna_pairs = Channel.fromPath("${params.dna_dir}/*_R1*.fastq.gz").map{ fn -> 
         def r1 = fn.toString().trim()
         def match = (r1 =~ /(.*)\/(.*)\_R1(_\d+)?\.(fastq|fq)(\.gz)?/)[0]
         def libname = match[2].replaceFirst(/_S(\d+)_L(\d+)/, '')
@@ -219,12 +221,12 @@ workflow call_variants{
         def r2 = dirn + match[2] + "_R2" + end + '.' + match[4] + gz
         def fnbase = match[2]
         return [ libname, fnbase, file(r1), file(r2)]
-    }).map { libname, tup ->
-        if (libname == tup[0]){
-            return tup
-        }
+    }.filter{
+        item -> 
+        def (key, _) = item
+        lib_set.contains(item)
     }
-    
+
     dna_bams = dna_pairs.combine(fa_genome) | align_dna_files
     bams_mkdup = dna_bams.groupTuple() | cat_dna_bams | dna_mkdup
     bamslist = bams_mkdup.map{ tup -> 
