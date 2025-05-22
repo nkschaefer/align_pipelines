@@ -81,7 +81,7 @@ process preproc_atac_files_multiome{
 }
 
 process align_atac_files{
-    time { 24.hour * task.attempt }
+    time { 36.hour * task.attempt }
     cpus params.threads
     memory params.memgb + ' GB'
     errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
