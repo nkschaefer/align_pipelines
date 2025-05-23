@@ -90,18 +90,19 @@ process align_atac_files{
     input:
     tuple val(lib),
     val(basename),
+    val(num),
+    file(idx),
     file(r1),
-    file(r2),
-    file(idx)
+    file(r2)
     
     output:
-    tuple val(lib), file("${basename}_sorted.bam"), file("${basename}_sorted.bam.bai")
+    tuple val(lib), file("${basename}_${num}_sorted.bam"), file("${basename}_${num}_sorted.bam.bai")
 
     script:
     """
     minimap2 -t ${params.threads} -y -a -x sr -R "@RG\\tID:${basename}\\tSM:${lib}\\tPL:Illumina" ${idx} ${r1} ${r2} \
-| samtools sort -n - | samtools fixmate -m - - | samtools sort -o ${basename}_sorted.bam
-    samtools index ${basename}_sorted.bam    
+| samtools sort -n - | samtools fixmate -m - - | samtools sort -o ${basename}_${num}_sorted.bam
+    samtools index ${basename}_${num}_sorted.bam    
     """    
    
 }
@@ -290,6 +291,23 @@ workflow align_atac_demux_species{
     atac_bams.groupTuple() | cat_atac_bams | atac_mkdup | atac_namesort | atac_fragments
 }
 
+process split_reads{
+    input:
+    tuple val(libname), val(fnbase), path(r1), path(r2), path(idx)
+
+    output:
+    tuple val(libname),
+          val(fnbase),
+          path(idx),
+          path("*_R1_001.*.fastq.gz"),
+          path("*_R2_001.*.fastq.gz")
+
+    script:
+    """
+    ${baseDir}/split_read_files -1 ${r1} -2 ${r2} -o . -n ${params.num_chunks}
+    """
+}
+
 workflow align_atac{
     take:
     libs
@@ -302,7 +320,10 @@ workflow align_atac{
     if (!params.atac_dir){
         error("ATAC reads directory is required")
     }
-    
+    if (params.num_chunks < 2){
+        error("num_chunks must be at least 2")
+    }
+
     def idx_atac = Channel.fromPath(params.atac_ref)
     
     // Get non-preprocessed files
@@ -353,8 +374,9 @@ workflow align_atac{
     }
     atac_preproc2 = atac_pairs.combine(idx_atac)
     
-    atac_bams = atac_preproc1.concat(atac_preproc2) | align_atac_files
-    
+    atac_bams = split_reads(atac_preproc1.concat(atac_preproc2)).flatMap{ ln, fsub, idx, files1, files2 ->
+        files2.indices.collect{ i -> [ln, fsub, i, idx, files1[i], files2[i]] } | align_atac_files
+
     atac_bams.groupTuple() | cat_atac_bams | atac_mkdup | atac_namesort | atac_fragments
 
 }

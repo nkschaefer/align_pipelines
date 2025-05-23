@@ -8,36 +8,8 @@ output_directory: '/path/to/dir'
 memgb: '80' 
 # Number of threads to use
 threads: 1
-
-# ==== If processing RNA-seq data =====
-# Directory storing RNA-seq data
-rna_dir: '/path/to/dir'
-# Path to built STAR v2.7.10b reference
-rna_ref: '/path/to/dir'
-# Path to RNA-seq barcode whitelist
-rna_whitelist: '/path/to/file'
-
-# ===== If processing ATAC-seq data =====
-# Directory storing ATAC-seq data
-atac_dir: '/path/to/dir'
-# Path to built minimap2 reference
-atac_ref: '/path/to-file'
-# Path to ATAC-seq barcode whitelist
-atac_whitelist: '/path/to/file'
-# Are the library names in RNA-seq reads different
-# from those in ATAC-seq reads? If so, you can provide
-# a 2-column tab separated text file here, mapping
-# ATAC-seq read file library names (1st col) to 
-# corresponding RNA-seq read file library names (2nd col).
-# This will ensure all the data from the same library goes
-# to the same place.
-atac_map: '/path/to/file'
-# Is this multiome data? If so, there are two 
-# barcode whitelists, and cell barcodes are the
-# RNA-seq barcode corresponding to the matching
-# ATAC barcode. If not, there is only one (ATAC)
-# barcode whitelist. Default = true
-multiome: true
+# How many pieces to split reads into
+num_chunks: 100
 
 # ===== If calling variants from genomic DNA reads =====
 # Directory storing reads

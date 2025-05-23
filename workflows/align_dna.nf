@@ -12,19 +12,20 @@ process align_dna_files{
     input:
     tuple val(lib),
     val(basename),
+    val(num),
     file(r1),
     file(r2),
     file(fa),
     file(idx)
     
     output:
-    tuple val(lib), file("${basename}_sorted.bam"), file("${basename}_sorted.bam.bai")
+    tuple val(lib), file("${basename}_${num}_sorted.bam"), file("${basename}_${num}_sorted.bam.bai")
 
     script:
     """
     minimap2 -t ${params.threads} -a -x sr -R "@RG\\tID:${basename}\\tSM:${lib}\\tPL:Illumina" ${idx} ${r1} ${r2} \
-| samtools sort -n - | samtools fixmate -m - - | samtools sort -o ${basename}_sorted.bam
-    samtools index ${basename}_sorted.bam    
+| samtools sort -n - | samtools fixmate -m - - | samtools sort -o ${basename}_${num}_sorted.bam
+    samtools index ${basename}_${num}_sorted.bam    
     """    
    
 }
@@ -184,6 +185,22 @@ process filt_vcf{
 
 }
 
+process split_reads{
+    input:
+    tuple val(libname), val(fnbase), path(r1), path(r2)
+
+    output:
+    tuple val(libname),
+          val(fnbase),
+          path("*_R1_001.*.fastq.gz"),
+          path("*_R2_001.*.fastq.gz")
+
+    script:
+    """
+    ${baseDir}/split_read_files -1 ${r1} -2 ${r2} -o . -n ${params.num_chunks}
+    """
+}
+
 workflow call_variants{
     take:
     libs
@@ -227,7 +244,10 @@ workflow call_variants{
         lib_set.contains(item)
     }
 
-    dna_bams = dna_pairs.combine(fa_genome) | align_dna_files
+    dna_bams = split_reads(dna_pairs).flatMap{ ln, fsub, files1, files2 -> 
+        files1.indices.collect{ i -> [ln, fsub, i, files1[i], files2[i]] }
+    }.combine(fa_genome) | align_dna_files
+
     bams_mkdup = dna_bams.groupTuple() | cat_dna_bams | dna_mkdup
     bamslist = bams_mkdup.map{ tup -> 
         tup[1]
