@@ -1,2 +1,3 @@
 atac_fq_preprocess
+split_read_files
 vcf_depth_filter
