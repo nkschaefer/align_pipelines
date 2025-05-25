@@ -150,11 +150,16 @@ process mm2_idx{
     path(fa)
 
     output:
-    tuple path(fa), path("*.mm2")
+    tuple path("genome_unzip.fa"), path("*.mm2")
 
     script:
     """
-    minimap2 -d ${fa}.mm2 ${fa}
+    if [ \$( file -L --mime-type -b ${fa} | grep "gzip" | wc -l ) -gt 0 ]; then 
+        zcat ${fa} > genome_unzip.fa
+    else 
+        cp ${fa} genome_unzip.fa
+    fi
+    minimap2 -d ${fa}.mm2 genome_unzip.fa
     """
 }
 

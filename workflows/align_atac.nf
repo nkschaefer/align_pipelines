@@ -291,16 +291,16 @@ workflow align_atac_demux_species{
     atac_bams.groupTuple() | cat_atac_bams | atac_mkdup | atac_namesort | atac_fragments
 }
 
-process split_reads{
+process split_reads_atac{
     input:
     tuple val(libname), val(fnbase), path(r1), path(r2), path(idx)
 
     output:
     tuple val(libname),
-          val(fnbase),
-          path(idx),
-          path("*_R1_001.*.fastq.gz"),
-          path("*_R2_001.*.fastq.gz")
+    val(fnbase),
+    path(idx),
+    path("*_R1_001.*.fastq.gz"),
+    path("*_R2_001.*.fastq.gz")
 
     script:
     """
@@ -374,8 +374,10 @@ workflow align_atac{
     }
     atac_preproc2 = atac_pairs.combine(idx_atac)
     
-    atac_bams = split_reads(atac_preproc1.concat(atac_preproc2)).flatMap{ ln, fsub, idx, files1, files2 ->
-        files2.indices.collect{ i -> [ln, fsub, i, idx, files1[i], files2[i]] } | align_atac_files
+    atac_bams = split_reads_atac(atac_preproc1.concat(atac_preproc2)).flatMap{ 
+        ln, fsub, idx, files1, files2 ->
+            files2.indices.collect{ i -> [ln, fsub, i, idx, files1[i], files2[i]] }
+    } | align_atac_files
 
     atac_bams.groupTuple() | cat_atac_bams | atac_mkdup | atac_namesort | atac_fragments
 
