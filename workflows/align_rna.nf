@@ -10,7 +10,7 @@ if (params.rna_ref_species){
 
 process map_rna{
     cpus params.threads
-    time { 72.hour * task.attempt }
+    time { 120.hour * task.attempt }
     memory params.memgb + ' GB'
     
     errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
@@ -42,6 +42,7 @@ process map_rna{
     def r1 = reads1.join(',')
     def r2 = reads2.join(',')
     def lib2 = lib.replace('/', '_')
+    def sortmem = (params.memgb.toInteger() - 1) * 1024 * 1024 * 1024
     """
     if [ ! -d ${reftrunc} ]; then
         mkdir ${reftrunc}
@@ -59,6 +60,7 @@ STAR --genomeDir ${reftrunc} \
  --readFilesCommand zcat \
  --clipAdapterType CellRanger4 \
  --outBAMsortingThreadN 1 \
+ --limitBAMsortRAM ${sortmem} \
  --outFileNamePrefix ${lib2} \
  --outSAMattributes NH HI AS nM CR CY UR UY GX GN CB UB \
  --outSAMtype BAM SortedByCoordinate \
