@@ -12,19 +12,20 @@ process align_dna_files{
     input:
     tuple val(lib),
     val(basename),
+    val(num),
     file(r1),
     file(r2),
     file(fa),
     file(idx)
     
     output:
-    tuple val(lib), file("${basename}_sorted.bam"), file("${basename}_sorted.bam.bai")
+    tuple val(lib), file("${basename}_${num}_sorted.bam"), file("${basename}_${num}_sorted.bam.bai")
 
     script:
     """
     minimap2 -t ${params.threads} -a -x sr -R "@RG\\tID:${basename}\\tSM:${lib}\\tPL:Illumina" ${idx} ${r1} ${r2} \
-| samtools sort -n - | samtools fixmate -m - - | samtools sort -o ${basename}_sorted.bam
-    samtools index ${basename}_sorted.bam    
+| samtools sort -n - | samtools fixmate -m - - | samtools sort -o ${basename}_${num}_sorted.bam
+    samtools index ${basename}_${num}_sorted.bam    
     """    
    
 }
@@ -32,7 +33,7 @@ process align_dna_files{
 process cat_dna_bams{
     time { 12.hour * task.attempt }
     cpus params.threads
-    
+    memory params.memgb + ' GB'
     errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
     maxRetries 3
     
@@ -109,7 +110,9 @@ process varcall{
     for bam in ${bams}; do
         echo \$bam >> bamlist.txt
     done
-    freebayes -f ${fa} -L bamlist.txt -t ${bed} --use-best-n-alleles 4 --min-alternate-count 4 > ${bed}.vcf
+    zcat ${fa} > genome.fa
+    samtools faidx genome.fa
+    freebayes -f genome.fa -L bamlist.txt -t ${bed} --use-best-n-alleles 4 --min-alternate-count 4 > ${bed}.vcf
     """
 }
 
@@ -149,11 +152,16 @@ process mm2_idx{
     path(fa)
 
     output:
-    tuple path(fa), path("*.mm2")
+    tuple path("genome_unzip.fa"), path("*.mm2")
 
     script:
     """
-    minimap2 -d ${fa}.mm2 ${fa}
+    if [ \$( file -L --mime-type -b ${fa} | grep "gzip" | wc -l ) -gt 0 ]; then 
+        zcat ${fa} > genome_unzip.fa
+    else 
+        cp ${fa} genome_unzip.fa
+    fi
+    minimap2 -d ${fa}.mm2 genome_unzip.fa
     """
 }
 
@@ -182,6 +190,22 @@ process filt_vcf{
     """
 
 
+}
+
+process split_reads{
+    input:
+    tuple val(libname), val(fnbase), path(r1), path(r2)
+
+    output:
+    tuple val(libname),
+          val(fnbase),
+          path("*_R1_001.*.fastq.gz"),
+          path("*_R2_001.*.fastq.gz")
+
+    script:
+    """
+    ${baseDir}/split_read_files -1 ${r1} -2 ${r2} -o . -n ${params.num_chunks}
+    """
 }
 
 workflow call_variants{
@@ -227,7 +251,10 @@ workflow call_variants{
         lib_set.contains(item)
     }
 
-    dna_bams = dna_pairs.combine(fa_genome) | align_dna_files
+    dna_bams = split_reads(dna_pairs).flatMap{ ln, fsub, files1, files2 -> 
+        files1.indices.collect{ i -> [ln, fsub, i, files1[i], files2[i]] }
+    }.combine(fa_genome) | align_dna_files
+
     bams_mkdup = dna_bams.groupTuple() | cat_dna_bams | dna_mkdup
     bamslist = bams_mkdup.map{ tup -> 
         tup[1]

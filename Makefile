@@ -18,10 +18,13 @@ KX2 = 16
 DEPS = lib/libhtswrapper.a
 DEPS2 = -lz -lhts -lpthread
 
-all: atac_fq_preprocess vcf_depth_filter
+all: atac_fq_preprocess split_read_files vcf_depth_filter
 
 atac_fq_preprocess: src/atac_fq_preprocess.cpp $(DEPS)
 	$(COMP) $(CXXFLAGS) $(CXXIFLAGS) src/atac_fq_preprocess.cpp $(LFLAGS) $(DEPS) -o atac_fq_preprocess $(DEPS2)
+
+split_read_files: src/split_read_files.cpp $(DEPS) 
+	$(COMP) $(CXXFLAGS) $(CXXIFLAGS) src/split_read_files.cpp $(LFLAGS) $(DEPS) -o split_read_files $(DEPS2)
 
 vcf_depth_filter: src/vcf_depth_filter.cpp
 	$(COMP) $(FLAGS) src/vcf_depth_filter.cpp -o vcf_depth_filter $(DEPS2)
