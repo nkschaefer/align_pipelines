@@ -110,7 +110,7 @@ process align_atac_files{
 process cat_atac_bams{
     time { 12.hour * task.attempt }
     cpus params.threads
-    
+    memory params.memgb + ' GB'
     errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
     maxRetries 3
     

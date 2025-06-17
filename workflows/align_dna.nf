@@ -33,7 +33,7 @@ process align_dna_files{
 process cat_dna_bams{
     time { 12.hour * task.attempt }
     cpus params.threads
-    
+    memory params.memgb + ' GB'
     errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
     maxRetries 3
     
@@ -110,7 +110,9 @@ process varcall{
     for bam in ${bams}; do
         echo \$bam >> bamlist.txt
     done
-    freebayes -f ${fa} -L bamlist.txt -t ${bed} --use-best-n-alleles 4 --min-alternate-count 4 > ${bed}.vcf
+    zcat ${fa} > genome.fa
+    samtools faidx genome.fa
+    freebayes -f genome.fa -L bamlist.txt -t ${bed} --use-best-n-alleles 4 --min-alternate-count 4 > ${bed}.vcf
     """
 }
 
