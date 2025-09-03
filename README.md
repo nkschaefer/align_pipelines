@@ -1,5 +1,5 @@
 # align_pipelines
-Nextflow pipelines for single cell sequencing data alignment
+Nextflow pipelines for single cell sequencing data alignment and bulk WGS alignment/variant calling
 
 This repository is intended to make it easy to align different types of data (e.g. single-cell RNA-seq, single-cell ATAC-seq, and bulk genomic DNA) to reference genomes, without the use of a proprietary pipeline like CellRanger. 
 
