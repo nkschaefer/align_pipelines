@@ -58,12 +58,14 @@ STAR --genomeDir ${reftrunc} \
  --runThreadN ${params.threads} \
  --readFilesIn ${r2} ${r1} \
  --readFilesCommand zcat \
- --clipAdapterType CellRanger4 \
+ --clip3pAdapterSeq polyA \
+ --clip3pAdapterMMp 0.1 \
  --outBAMsortingThreadN 1 \
  --limitBAMsortRAM ${sortmem} \
  --outFileNamePrefix ${lib2} \
  --outSAMattributes NH HI AS nM CR CY UR UY GX GN CB UB \
  --outSAMtype BAM SortedByCoordinate \
+ --outSAMunmapped Within \
  --soloType CB_UMI_Simple \
  --soloCBstart 1 \
  --soloCBlen 16 \
@@ -79,6 +81,7 @@ STAR --genomeDir ${reftrunc} \
  --limitSjdbInsertNsj 5000000 \
  --soloFeatures GeneFull_Ex50pAS \
  --soloMultiMappers EM 
+
     mv ${lib2}Aligned.sortedByCoord.out.bam gex.bam
     samtools index gex.bam
     mv ${lib2}Solo.out/Barcodes.stats Barcodes.stats
@@ -89,6 +92,8 @@ STAR --genomeDir ${reftrunc} \
     gzip ${lib2}Solo.out/GeneFull_Ex50pAS/raw/*
     mv ${lib2}Solo.out/GeneFull_Ex50pAS/filtered .
     mv ${lib2}Solo.out/GeneFull_Ex50pAS/raw .
+
+# --clipAdapterType CellRanger4
     """
 }
 
