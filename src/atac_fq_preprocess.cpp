@@ -11,6 +11,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <utility>
+#include <filesystem>
 #include <sys/stat.h>
 #include <zlib.h>
 #include <htswrapper/bc.h>
@@ -159,6 +160,14 @@ int main(int argc, char *argv[]) {
 
     string r1out = output_dir + filename_nopath(r1fn);
     string r2out = output_dir + filename_nopath(r2fn);
+    
+    filesystem::path p1 = r1fn;
+    filesystem::path p2 = r1out;
+
+    if (filesystem::equivalent(p1, p2)){
+        fprintf(stderr, "ERROR: input and output directories match - files will be overwritten.\n");
+        exit(1);
+    }
 
     gzFile outs[2];
     outs[0] = gzopen(r1out.c_str(), "w");
