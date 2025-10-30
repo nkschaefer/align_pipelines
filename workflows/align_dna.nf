@@ -94,7 +94,7 @@ process split_fai_regions{
 
 process varcall{
     cpus 1
-    time { 36.hour * task.attempt }
+    time { 96.hour * task.attempt }
     memory params.memgb + ' GB'
     errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
     maxRetries 3
