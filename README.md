@@ -39,9 +39,9 @@ process.penv = "smp"
 ### Job settings
 Copy the relevant `example[whatever].yml` file (depending on what you want to do) to your working directory and edit the file to reflect your parameters. These files contain comments explaining what each setting in them is. Then run the pipeline as follows:
 ```
-nextflow [/path/to/align_pipelines]/[pipeline].nf -params-file [params.yml]
+nextflow [/path/to/align_pipelines]/align_pipelines.nf -params-file [params.yml]
 ```
-where `[pipeline].nf` is the `.nf` file for the pipeline you want to run and `[params.yml]` is the file you edited.
+where `[params.yml]` is the file you edited.
 
 To run on a cluster, you will probably want to submit as a cluster job. For example, on UCSF's Wynton cluster, you could write a script like this:
 ```
