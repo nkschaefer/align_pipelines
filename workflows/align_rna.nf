@@ -97,6 +97,83 @@ STAR --genomeDir ${reftrunc} \
     """
 }
 
+process map_rna_velocity{
+    cpus params.threads
+    time { 120.hour * task.attempt }
+    memory params.memgb + ' GB'
+    
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+    maxRetries 3
+    
+    input: 
+    tuple val(lib),
+        file(reads1),
+        file(reads2),
+        val(refname),
+        file(ref),
+        file(whitelist)
+
+    publishDir "${params.output_directory}/${lib}", mode: 'copy', saveAs: { path -> path }
+
+    output:
+    tuple val(lib),
+        file("Barcodes.stats"),
+        file("Features.stats"),
+        file("Summary.csv"),
+        file("splicing_raw/*"),
+        file("splicing_filtered/*")
+
+    script:
+    def reftrunc = refname.split('/')[-1]    
+    def r1 = reads1.join(',')
+    def r2 = reads2.join(',')
+    def lib2 = lib.replace('/', '_')
+    def sortmem = (params.memgb.toInteger() - 1) * 1024 * 1024 * 1024
+    """
+    if [ ! -d ${reftrunc} ]; then
+        mkdir ${reftrunc}
+        mv ${ref} ${reftrunc}
+    fi
+    if [ \$( file -L --mime-type -b ${whitelist} | grep "gzip" | wc -l ) -gt 0 ]; then 
+        zcat ${whitelist} > wl_unzip.txt
+    else 
+        cp ${whitelist} wl_unzip.txt
+    fi
+
+STAR --genomeDir ${reftrunc} \
+ --runThreadN ${params.threads} \
+ --readFilesIn ${r2} ${r1} \
+ --readFilesCommand zcat \
+ --clip3pAdapterSeq polyA \
+ --clip3pAdapterMMp 0.1 \
+ --outFileNamePrefix ${lib2} \
+ --soloType CB_UMI_Simple \
+ --soloCBstart 1 \
+ --soloCBlen 16 \
+ --soloUMIstart 17 \
+ --soloUMIlen 12 \
+ --soloCBwhitelist wl_unzip.txt \
+ --outFilterScoreMin 30 \
+ --soloCBmatchWLtype 1MM_multi_Nbase_pseudocounts \
+ --soloUMIfiltering MultiGeneUMI_CR \
+ --soloUMIdedup 1MM_CR \
+ --soloCellFilter EmptyDrops_CR \
+ --soloBarcodeReadLength 0 \
+ --limitSjdbInsertNsj 5000000 \
+ --soloFeatures Gene Velocyto \
+ --soloMultiMappers EM 
+
+    mv ${lib2}Solo.out/Barcodes.stats Barcodes.stats
+    cp ${lib2}Solo.out/Velocyto/Features.stats .
+    cp ${lib2}Solo.out/Velocyto/Summary.csv .
+    gzip ${lib2}Solo.out/Velocyto/filtered/*
+    gzip ${lib2}Solo.out/Velocyto/raw/*
+    mv ${lib2}Solo.out/Velocyto/filtered splicing_filtered
+    mv ${lib2}Solo.out/Velocyto/raw splicing_raw
+
+    """
+}
+
 workflow align_rna_demux_species{
     main:
     
@@ -160,6 +237,12 @@ workflow align_rna{
         return [lib, r1s, r2s]
     }
     
-    map_rna(libs.cross(read_pairs).map{ lib, tup -> tup }.combine(rna_idx).combine(Channel.fromPath(params.rna_whitelist)))
-    
+    if (params.rna_splicing){
+        map_rna_velocity(
+            libs.cross(read_pairs).map{ lib, tup -> tup }.combine(rna_idx).combine(
+                Channel.fromPath(params.rna_whitelist)
+            ))
+    } else{
+        map_rna(libs.cross(read_pairs).map{ lib, tup -> tup }.combine(rna_idx).combine(Channel.fromPath(params.rna_whitelist)))
+    }
 }
