@@ -21,8 +21,9 @@ def parse_args():
     parser.add_argument("--out_dir", "-d", help="Output directory to write BED files",
             required=True)
     parser.add_argument("--num_chunks", "-n", help="Number of chunks (this is a maximum; \
-if higher than the number of non-filtered chromosomes, it will be set to that number)",
-            type=int, required=True)
+if higher than the number of non-filtered chromosomes, it will be set to that number), Set \
+to negative or zero to make every chromsome/scaffold a chunk.",
+            type=int, required=False, default=-1)
     parser.add_argument("--rm_seqs", "-r", help="Patterns to exclude from sequence names, \
 pipe separated. Default = chrUn|random|alt", default="chrUn|random|alt", required=False)
     parser.add_argument("--minlen", "-m", help="Minimum length for a sequence to be included",
@@ -57,6 +58,8 @@ def main(args):
     f.close()
     
     nchunk = options.num_chunks
+    if nchunk <= 0:
+        nchunk = nchroms
     if nchroms < options.num_chunks:
         nchunk = nchroms
     

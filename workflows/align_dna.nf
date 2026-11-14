@@ -88,13 +88,13 @@ process split_fai_regions{
     script:
     """
     samtools faidx ${fa}
-    ${baseDir}/segment_genome.py -n 30 -d . -f ${fa}.fai 
+    ${baseDir}/segment_genome.py -n -1 -d . -f ${fa}.fai 
     """
 }
 
 process varcall{
     cpus 1
-    time { 96.hour * task.attempt }
+    time { 168.hour * task.attempt }
     memory params.memgb + ' GB'
     errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
     maxRetries 3
@@ -107,6 +107,9 @@ process varcall{
 
     script:
     """
+    if [ -e bamlist.txt ]; then
+        rm bamlist.txt
+    fi
     for bam in ${bams}; do
         echo \$bam >> bamlist.txt
     done
