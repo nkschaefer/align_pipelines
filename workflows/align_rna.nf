@@ -117,9 +117,16 @@ process map_rna_velocity{
 
     output:
     tuple val(lib),
+        file("gex.bam"),
+        file("gex.bam.bai"),
         file("Barcodes.stats"),
         file("Features.stats"),
         file("Summary.csv"),
+        file("UMIperCellSorted.txt"),
+        file("splicing_Features.stats"),
+        file("splicing_Summary.csv"),
+        file("raw/*"),
+        file("filtered/*"),       
         file("splicing_raw/*"),
         file("splicing_filtered/*")
 
@@ -146,7 +153,12 @@ STAR --genomeDir ${reftrunc} \
  --readFilesCommand zcat \
  --clip3pAdapterSeq polyA \
  --clip3pAdapterMMp 0.1 \
+ --outBAMsortingThreadN 1 \
+ --limitBAMsortRAM ${sortmem} \
  --outFileNamePrefix ${lib2} \
+ --outSAMattributes NH HI AS nM CR CY UR UY GX GN CB UB \
+ --outSAMtype BAM SortedByCoordinate \
+ --outSAMunmapped Within \
  --soloType CB_UMI_Simple \
  --soloCBstart 1 \
  --soloCBlen 16 \
@@ -160,12 +172,23 @@ STAR --genomeDir ${reftrunc} \
  --soloCellFilter EmptyDrops_CR \
  --soloBarcodeReadLength 0 \
  --limitSjdbInsertNsj 5000000 \
- --soloFeatures Gene Velocyto \
- --soloMultiMappers EM 
+ --soloFeatures GeneFull_Ex50pAS Gene Velocyto\
+ --soloMultiMappers EM
 
+    mv ${lib2}Aligned.sortedByCoord.out.bam gex.bam
+    samtools index gex.bam
+    
     mv ${lib2}Solo.out/Barcodes.stats Barcodes.stats
-    cp ${lib2}Solo.out/Velocyto/Features.stats .
-    cp ${lib2}Solo.out/Velocyto/Summary.csv .
+    cp ${lib2}Solo.out/GeneFull_Ex50pAS/Features.stats .
+    cp ${lib2}Solo.out/GeneFull_Ex50pAS/Summary.csv .
+    cp ${lib2}Solo.out/GeneFull_Ex50pAS/UMIperCellSorted.txt .
+    gzip ${lib2}Solo.out/GeneFull_Ex50pAS/filtered/*
+    gzip ${lib2}Solo.out/GeneFull_Ex50pAS/raw/*
+    mv ${lib2}Solo.out/GeneFull_Ex50pAS/filtered .
+    mv ${lib2}Solo.out/GeneFull_Ex50pAS/raw .
+    
+cp ${lib2}Solo.out/Velocyto/Features.stats splicing_Features.stats
+    cp ${lib2}Solo.out/Velocyto/Summary.csv splicing_Summary.csv
     gzip ${lib2}Solo.out/Velocyto/filtered/*
     gzip ${lib2}Solo.out/Velocyto/raw/*
     mv ${lib2}Solo.out/Velocyto/filtered splicing_filtered
@@ -203,7 +226,11 @@ workflow align_rna_demux_species{
         }
         return [lib, r1s, r2s, refname[0], ref[0] ]
     }.combine(Channel.fromPath(params.rna_whitelist))
-    map_rna(read_pairs)
+    if (params.rna_splicing){
+        map_rna_velocity(read_pairs)
+    } else{
+        map_rna(read_pairs)
+    }
 }
 
 workflow align_rna{
@@ -237,12 +264,13 @@ workflow align_rna{
         return [lib, r1s, r2s]
     }
     
+    map_dat = libs.cross(read_pairs).map{ lib, tup -> tup }.combine(rna_idx).combine(
+        Channel.fromPath(params.rna_whitelist)
+    )
+    
     if (params.rna_splicing){
-        map_rna_velocity(
-            libs.cross(read_pairs).map{ lib, tup -> tup }.combine(rna_idx).combine(
-                Channel.fromPath(params.rna_whitelist)
-            ))
+        map_rna_velocity(map_dat)
     } else{
-        map_rna(libs.cross(read_pairs).map{ lib, tup -> tup }.combine(rna_idx).combine(Channel.fromPath(params.rna_whitelist)))
+        map_rna(map_dat)
     }
 }

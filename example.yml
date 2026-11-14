@@ -16,9 +16,8 @@ rna_dir: '/path/to/dir'
 rna_ref: '/path/to/dir'
 # Path to RNA-seq barcode whitelist
 rna_whitelist: '/path/to/file'
-# Should this run count RNA splicing? If so, 
-# the full alignment will not happen (RNA splicing only)
-rna_splicing: false
+# Should this run count RNA splicing? 
+rna_splicing: true
 
 # ===== If processing ATAC-seq data =====
 # Directory storing ATAC-seq data
